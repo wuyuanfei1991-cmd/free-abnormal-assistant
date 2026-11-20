@@ -41,3 +41,4 @@ jobs:
           name: free-abnormal-assistant-debug-apk
           path: android/app/build/outputs/apk/debug/app-debug.apk
           if-no-files-found: error
+fix: use Java 21
