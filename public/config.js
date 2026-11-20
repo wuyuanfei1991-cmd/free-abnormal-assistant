@@ -1,0 +1,1 @@
+// Android APK 直接通过 Capacitor 原生网络请求免费公开行情源，无需自建服务器。\nwindow.APP_CONFIG = { apiBase: '' };\n
