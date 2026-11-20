@@ -1,0 +1,19 @@
+{
+  "name": "free-abnormal-assistant",
+  "version": "0.8.0",
+  "private": true,
+  "description": "Standalone free A-share monitor Android app; direct public-data access without user-hosted backend",
+  "scripts": {
+    "android:prepare": "npm install && npx cap add android && npx cap sync android",
+    "android:sync": "npx cap sync android",
+    "android:open": "npx cap open android"
+  },
+  "dependencies": {
+    "@capacitor/android": "^7.4.3",
+    "@capacitor/core": "^7.4.3"
+  },
+  "devDependencies": {
+    "@capacitor/cli": "^7.4.3"
+  },
+  "engines": { "node": ">=20" }
+}
