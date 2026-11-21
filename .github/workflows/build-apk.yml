@@ -7,7 +7,7 @@ on:
       - "README.md"
       - "*.zip"
 permissions:
-  contents: read
+  contents: write
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -37,9 +37,17 @@ jobs:
         run: node --check public/app.js
       - name: Build debug APK
         run: cd android && chmod +x gradlew && ./gradlew assembleDebug
-      - name: Upload APK
+      - name: Upload APK artifact
         uses: actions/upload-artifact@v4
         with:
           name: free-abnormal-assistant-debug-apk
           path: android/app/build/outputs/apk/debug/app-debug.apk
           if-no-files-found: error
+      - name: Publish APK release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: v1.0.0
+          name: 免费异动查询 v1.0.0
+          files: android/app/build/outputs/apk/debug/app-debug.apk
+          fail_on_unmatched_files: true
+          make_latest: true
