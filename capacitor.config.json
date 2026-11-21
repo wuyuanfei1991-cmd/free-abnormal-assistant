@@ -1,6 +1,6 @@
 {
   "appId": "cn.free.abnormalassistant",
-  "appName": "免费异动助手",
+  "appName": "免费异动查询",
   "webDir": "public",
   "bundledWebRuntime": false,
   "android": { "allowMixedContent": false },
