@@ -25,11 +25,11 @@ async function scan(){const box=$('#scanList'),meta=$('#scanMeta');if(!box)retur
 function renderWatch(){ $('#watchlist').innerHTML=watch.map(c=>quotes[c]?card(quotes[c]):`<div class="quote"><span>${c}</span><span class="muted">尚未获取行情</span></div>`).join('')||'<div class="empty">还没有自选股票</div>';bindRemove();}
 function bindRemove(){document.querySelectorAll('[data-remove]').forEach(b=>b.onclick=()=>{watch=watch.filter(x=>x!==b.dataset.remove);save();refresh();});}
 $('#anomalyRefresh').onclick=anomalyScan;\n
-let anomalyRows={near:[],hit:[],focus:[]};
+let anomalyRows={near:[],hit:[],focus:[]};\nlet anomalyHistory=JSON.parse(localStorage.getItem('faa-anomaly-history')||'[]');
 let anomalyTab='near';
 function renderAnomaly(){
  const ids={near:'#anomalyNear',hit:'#anomalyHit',focus:'#anomalyFocus'};
- Object.entries(ids).forEach(([k,sel])=>{const el=$(sel);if(!el)return;const arr=anomalyRows[k]||[];el.hidden=anomalyTab!==k;el.innerHTML=arr.map(x=>{const ps=x.risk.periods.filter(p=>p.available);const d=ps.map(p=>`<span>${p.days}日偏离 <b class="${p.deviation>=0?'up':'down'}">${p.deviation>=0?'+':''}${p.deviation.toFixed(2)}%</b>（阈值 ${p.upperThreshold}/${p.lowerThreshold}）</span>`).join(' · ');return `<div class="quote"><div><div class="name">${esc(x.quote.name||x.quote.code)}</div><div class="code">${x.quote.code} · ${esc(x.risk.board)}</div></div><div class="price ${x.quote.change>=0?'up':'down'}">${x.quote.price.toFixed(2)}<div style="font-size:12px">${x.quote.change>=0?'+':''}${x.quote.change.toFixed(2)}%</div></div><div class="meta anomaly-detail"><span>${d||'历史数据不足'}</span><span>数据截至 ${esc(x.risk.asOf||'未知')} · ${esc(x.risk.source)}</span></div></div>`;}).join('')||'<div class="empty">当前没有已计算的股票</div>';});
+ Object.entries(ids).forEach(([k,sel])=>{const el=$(sel);if(!el)return;const arr=anomalyRows[k]||[];el.hidden=anomalyTab!==k;el.innerHTML=arr.map(x=>{const ps=x.risk.periods.filter(p=>p.available);const d=ps.map(p=>`<span>${p.days}日偏离 <b class="${p.deviation>=0?'up':'down'}">${p.deviation>=0?'+':''}${p.deviation.toFixed(2)}%</b>（阈值 ${p.upperThreshold}/${p.lowerThreshold}）</span>`).join(' · ');return `<div class="quote"><div><div class="name">${esc(x.quote.name||x.quote.code)}</div><div class="code">${x.quote.code} · ${esc(x.risk.board)}</div></div><div class="price ${x.quote.change>=0?'up':'down'}">${x.quote.price.toFixed(2)}<div style="font-size:12px">${x.quote.change>=0?'+':''}${x.quote.change.toFixed(2)}%</div></div><div class="meta anomaly-detail"><span>${d||'历史数据不足'}</span><span>数据截至 ${esc(x.risk.asOf||'未知')} · ${esc(x.risk.source)}${x.checkedAt?' · 记录 '+new Date(x.checkedAt).toLocaleString('zh-CN'):''}</span></div></div>`;}).join('')||'<div class="empty">当前没有已计算的股票</div>';});
  document.querySelectorAll('[data-anomaly]').forEach(b=>b.classList.toggle('active',b.dataset.anomaly===anomalyTab));
 }
 document.querySelectorAll('[data-anomaly]').forEach(b=>b.onclick=()=>{anomalyTab=b.dataset.anomaly;renderAnomaly();});
@@ -43,8 +43,8 @@ async function anomalyScan(){
   const hit=[],near=[],focus=[];
   for(const x of results){const valid=x.risk.periods.filter(p=>p.available);const triggered=valid.filter(p=>p.deviation>=p.upperThreshold||p.deviation<=p.lowerThreshold);if(triggered.length)hit.push(x);else{const close=valid.some(p=>p.deviation>=p.upperThreshold*.8||p.deviation<=p.lowerThreshold*.8);if(close)near.push(x);}if(triggered.length||valid.some(p=>Math.abs(p.deviation)>=p.upperThreshold*.7))focus.push(x);}
   const sort=(a,b)=>Math.max(...b.risk.periods.filter(p=>p.available).map(p=>Math.abs(p.deviation)/(p.deviation>=0?p.upperThreshold:Math.abs(p.lowerThreshold))),0)-Math.max(...a.risk.periods.filter(p=>p.available).map(p=>Math.abs(p.deviation)/(p.deviation>=0?p.upperThreshold:Math.abs(p.lowerThreshold))),0);
-  anomalyRows={near:near.sort(sort),hit:hit.sort(sort),focus:focus.sort(sort)};
-  meta.textContent=`全市场快照 ${snap.count} 只；候选深算 ${pool.length} 只；成功计算 ${results.length} 只；接近阈值 ${near.length} 只；达到参考阈值 ${hit.length} 只。数据时间 ${new Date(snap.scannedAt).toLocaleString('zh-CN')}。候选筛选可能漏掉当日涨幅不大的累积偏离股。`;
+  const checkedAt=new Date().toISOString();for(const x of hit){const key=x.quote.code;const old=anomalyHistory.findIndex(v=>v.quote.code===key);const record={...x,checkedAt};if(old>=0)anomalyHistory[old]=record;else anomalyHistory.unshift(record);}anomalyHistory=anomalyHistory.slice(0,300);localStorage.setItem('faa-anomaly-history',JSON.stringify(anomalyHistory));anomalyRows={near:near.sort(sort),hit:[...anomalyHistory],focus:focus.sort(sort)};
+  meta.textContent=`全市场快照 ${snap.count} 只；候选深算 ${pool.length} 只；成功计算 ${results.length} 只；接近阈值 ${near.length} 只；本次达到参考阈值 ${hit.length} 只；历史记录 ${anomalyHistory.length} 条。数据时间 ${new Date(snap.scannedAt).toLocaleString('zh-CN')}。候选筛选可能漏掉当日涨幅不大的累积偏离股。`;
   renderAnomaly();
  }catch(e){meta.textContent='异动扫描失败：'+e.message+'。失败数据不会标记为正常。'}
  finally{if(btn)btn.disabled=false;}
