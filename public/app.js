@@ -20,8 +20,10 @@ async function refresh(){ $('#marketState').textContent='行情更新中…';$('
 async function scan(){const box=$('#scanList'),meta=$('#scanMeta');if(!box)return;meta.textContent='正在请求全市场公开行情…';box.innerHTML='<div class="empty">扫描中…</div>';try{const r=await apiGet('/api/scan');const j=await r.json();if(!j.ok)throw Error(j.error||'扫描失败');const d=j.data;meta.textContent=`扫描 ${d.count} 只 · ${d.source} · ${new Date(d.scannedAt).toLocaleString('zh-CN')}`;box.innerHTML=d.movers.map(q=>`<div class="quote"><div><div class="name">${esc(q.name)}</div><div class="code">${q.code}</div></div><div class="price ${q.change>=0?'up':'down'}">${q.price.toFixed(2)}<div style="font-size:12px">${q.change>=0?'+':''}${q.change.toFixed(2)}%</div></div><div class="meta"><span>换手 ${q.turnover.toFixed(2)}% · 量比 ${q.volumeRatio.toFixed(2)}</span><button data-add="${q.code}">加入自选</button></div></div>`).join('')||'<div class="empty">当前没有符合条件的观察标的</div>';box.querySelectorAll('[data-add]').forEach(b=>b.onclick=()=>{if(!watch.includes(b.dataset.add))watch.unshift(b.dataset.add);save();alert('已加入自选');});}catch(e){meta.textContent='扫描暂不可用';box.innerHTML=`<div class="empty">${esc(e.message)}<br>请稍后重试，或使用自选行情。</div>`;}}
 function renderWatch(){ $('#watchlist').innerHTML=watch.map(c=>quotes[c]?card(quotes[c]):`<div class="quote"><span>${c}</span><span class="muted">尚未获取行情</span></div>`).join('')||'<div class="empty">还没有自选股票</div>';bindRemove();}
 function bindRemove(){document.querySelectorAll('[data-remove]').forEach(b=>b.onclick=()=>{watch=watch.filter(x=>x!==b.dataset.remove);save();refresh();});}
-$('#anomalyRefresh').onclick=anomalyScan;\n
-let anomalyRows={near:[],hit:[],focus:[]};\nlet anomalyHistory=JSON.parse(localStorage.getItem('faa-anomaly-history')||'[]');
+$('#anomalyRefresh').onclick=anomalyScan;
+
+let anomalyRows={near:[],hit:[],focus:[]};
+let anomalyHistory=JSON.parse(localStorage.getItem('faa-anomaly-history')||'[]');
 let anomalyTab='near';
 function renderAnomaly(){
  const ids={near:'#anomalyNear',hit:'#anomalyHit',focus:'#anomalyFocus'};
@@ -45,7 +47,8 @@ async function anomalyScan(){
  }catch(e){meta.textContent='异动扫描失败：'+e.message+'。失败数据不会标记为正常。'}
  finally{if(btn)btn.disabled=false;}
 }
-\n$('#addStock').onclick=()=>{let c=$('#stockCode').value.trim();if(!/^\d{6}$/.test(c))return alert('请输入6位股票代码');if(!watch.includes(c))watch.unshift(c);save();$('#stockCode').value='';refresh();};$('#stockCode').addEventListener('keydown',e=>{if(e.key==='Enter')$('#addStock').click()});$('#refresh').onclick=refresh;$('#scanBtn').onclick=scan;
+
+$('#addStock').onclick=()=>{let c=$('#stockCode').value.trim();if(!/^\d{6}$/.test(c))return alert('请输入6位股票代码');if(!watch.includes(c))watch.unshift(c);save();$('#stockCode').value='';refresh();};$('#stockCode').addEventListener('keydown',e=>{if(e.key==='Enter')$('#addStock').click()});$('#refresh').onclick=refresh;$('#scanBtn').onclick=scan;
 $('#riskFetch').onclick=async()=>{
  const code=$('#cCode').value.trim(); if(!/^\d{6}$/.test(code))return $('#calcResult').innerHTML='请输入6位股票代码';
  $('#riskFetch').disabled=true;$('#riskFetch').textContent='正在获取历史日线…';$('#calcResult').innerHTML='正在计算近10/30个交易日累计偏离，请稍候…';
