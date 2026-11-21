@@ -1,1 +1,10 @@
-{"name":"免费异动助手","short_name":"异动助手","start_url":"/","display":"standalone","background_color":"#0b1220","theme_color":"#101827","lang":"zh-CN","description":"永久免费A股异动监测与风险测算工具"}
+{
+  "name":"免费异动查询",
+  "short_name":"免费异动查询",
+  "start_url":"/",
+  "display":"standalone",
+  "background_color":"#0b1220",
+  "theme_color":"#101827",
+  "lang":"zh-CN",
+  "description":"永久免费A股异动监测与风险测算工具"
+}
